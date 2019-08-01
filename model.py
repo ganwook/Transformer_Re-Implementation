@@ -4,6 +4,7 @@ import math
 import numpy as np
 import copy
 import torch.nn.functional as F
+from embedding import *
 
 def clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
@@ -107,7 +108,7 @@ class EncoderLayer(nn.Module):
 class Encoder(nn.Module):
     def __init__(self, layer, N):
         super(Encoder, self).__init__()
-        self.layer = clones(layer, N)
+        self.layers = clones(layer, N)
         self.norm = LayerNorm(layer.size)
         
     def forward(self, x, mask):
@@ -134,7 +135,7 @@ class DecoderLayer(nn.Module):
 class Decoder(nn.Module):
     def __init__(self, layer, N):
         super(Decoder, self).__init__()
-        self.layer = clones(layer, N)
+        self.layers = clones(layer, N)
         self.norm = LayerNorm(layer.size)
         
     def forward(self, x, memory, src_mask, tgt_mask):
@@ -150,16 +151,16 @@ class EncoderDecoder(nn.Module):
         self.decoder = decoder
         self.src_embed = src_embed
         self.tgt_embed = tgt_embed
-        self.generaotr = generator
+        self.generator = generator
     
     def forward(self, src, tgt, src_mask, tgt_mask):
         return self.decode(self.encode(src, src_mask), src_mask, tgt, tgt_mask)
     
     def encode(self, src, src_mask):
-        return self.encoder(self.src_embed(src, src_mask))
+        return self.encoder(self.src_embed(src), src_mask)
     
     def decode(self, memory, src_mask, tgt, tgt_mask):
-        return self.deocder(self.tgt_embed(tgt), memory, src_mask, tgt_mask)
+        return self.decoder(self.tgt_embed(tgt), memory, src_mask, tgt_mask)
     
 class Generator(nn.Module):
     def __init__(self, d_model, vocab):

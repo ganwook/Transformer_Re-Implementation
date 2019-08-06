@@ -6,21 +6,26 @@ DEVICE_SET : if using GPU, type "cuda"
 BATCH_SIZE : batch size
 '''
 
-def get_data(file_path, field_name, MIN_FREQ = 2, DEVICE_SET = None):
+def get_data(file_path, MIN_FREQ = 2, DEVICE_SET = None):
     
     BOS_WORD = '<s>'
     EOS_WORD = '</s>'
-    BLANK_WORD = "<blank>"
+    PAD_WORD = "<pad>"
                 
-    data_field = data.Field(sequential = True, use_vocab = True,
-                        batch_first = True,tokenize=str.split, 
-                        init_token = BOS_WORD,                   
-                        eos_token = EOS_WORD, pad_token=BLANK_WORD)
+    field_en = data.Field(sequential = True, use_vocab = True,
+                    batch_first = True,tokenize=str.split, 
+                    init_token = BOS_WORD,                   
+                 eos_token = EOS_WORD, pad_token=PAD_WORD)
+    
+    field_de = data.Field(sequential = True, use_vocab = True,
+                    batch_first = True, tokenize=str.split, 
+                    init_token = BOS_WORD,                   
+                    eos_token = EOS_WORD, pad_token=PAD_WORD)
 
-    tabular_set = data.TabularDataset(path= file_path, 
-                                 fields = [(field_name, data_field)],
-                                 format = 'tsv')
+    trn = datasets.TranslationDataset(path = file_path, exts = ('en', 'de'),
+                           fields = [('en', field_en), ('de', field_de)])
 
-    data_field.build_vocab(tabular_set, min_freq = MIN_FREQ)
+    field_en.build_vocab(trn.en, min_freq = MIN_FREQ)
+    field_de.build_vocab(trn.de, min_freq = MIN_FREQ)
 
-    return data_field, tabular_set
+    return field_en, field_de, trn

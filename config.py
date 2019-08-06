@@ -1,0 +1,2 @@
+DEVICE_SET = None
+BATCH_SIZE = 3

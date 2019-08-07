@@ -2,6 +2,13 @@ import model as trf
 from process import get_data
 from config import *
 
+import torch
+import torch.nn as nn
+import time
+from torch.autograd import Variable
+import torch.nn.functional as F
+
+
 from torchtext import data, datasets
 
 class Batch:
@@ -24,17 +31,17 @@ class Batch:
 def train_model(epochs, model, criterion, model_opt, train_iter, print_every = 100):
     model.train()
     start = time.time()
-    
+    total_loss = 0
+	
     for epoch in range(epochs):
         for i, batch in enumerate(train_iter):
-            total_loss = 0
             
             src = batch.en
             tgt = batch.de
             
             # equalize sequence length of batches, originated from torchtext
             diff_ = src.size(-1) - tgt.size(-1)
-            bal_pad = torch.ones(BATCH_SIZE, abs(diff_), dtype = torch.long) * pad_idx
+            bal_pad = torch.ones(BATCH_SIZE, abs(diff_), dtype = torch.long)
 
             if diff_ < 0:
                 src = torch.cat((src, bal_pad), dim = 1)
@@ -56,8 +63,11 @@ def train_model(epochs, model, criterion, model_opt, train_iter, print_every = 1
 
             total_loss += loss.data
 
-            if i % print_every == 1:
+            if i % print_every == 0:
                 elapsed = time.time() - start
-                print("Epoch Step: %d Loss: %f per Sec: %f" %
+                print("Iteration Step: %d Loss: %f per Sec: %f" %
                         (i, total_loss / print_every, elapsed))
                 start = time.time()
+				total_loss = 0
+				
+		print("Epoch Step : %d is done" %(epcoh))

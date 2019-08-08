@@ -1,7 +1,7 @@
 # For batch
-DEVICE_SET = None
-BATCH_SIZE = 3
+DEVICE_SET = "cuda"
+BATCH_SIZE = 5000
 
 # For train
-print_every = 50
+print_every = 100
 epochs = 10

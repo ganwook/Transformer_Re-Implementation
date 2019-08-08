@@ -28,11 +28,13 @@ class Batch:
             trf.subsequent_mask(tgt.size(-1)).type_as(tgt_mask.data))
         return tgt_mask
 
-def train_model(epochs, model, criterion, model_opt, train_iter, print_every = 100):
+def train_model(epochs, model, criterion, model_opt, train_iter, save_path, print_every = 100):
+    global BATCH_SIZE
     model.train()
     start = time.time()
     total_loss = 0
-	
+    mean_tokens = 0
+    
     for epoch in range(epochs):
         for i, batch in enumerate(train_iter):
             
@@ -62,12 +64,17 @@ def train_model(epochs, model, criterion, model_opt, train_iter, print_every = 1
             model_opt.step()
 
             total_loss += loss.data
+            mean_tokens += bat.ntokens / BATCH_SIZE
 
             if i % print_every == 0:
                 elapsed = time.time() - start
-                print("Iteration Step: %d Loss: %f per Sec: %f" %
-                        (i, total_loss / print_every, elapsed))
+                print("Iteration Step: %d Loss per token: %f per Sec: %f #(tokens) : %d" %
+                        (i, total_loss / mean_tokens , elapsed, mean_tokens / print_every))
                 start = time.time()
-				total_loss = 0
-				
-		print("Epoch Step : %d is done" %(epcoh))
+                
+                total_loss = 0
+                mean_tokens = 0
+
+        torch.save(model.state_dict(), save_path + str(i) + ".pt") # save check point
+        print("Epoch Step : %d is done" %(epcoh))
+        

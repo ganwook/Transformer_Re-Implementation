@@ -29,7 +29,7 @@ class Batch:
         return tgt_mask
 
 def train_model(epochs, model, criterion, model_opt, train_iter, save_path, print_every = 100):
-    global BATCH_SIZE
+    
     model.train()
     start = time.time()
     total_loss = 0
@@ -43,7 +43,7 @@ def train_model(epochs, model, criterion, model_opt, train_iter, save_path, prin
             
             # equalize sequence length of batches, originated from torchtext
             diff_ = src.size(-1) - tgt.size(-1)
-            bal_pad = torch.ones(BATCH_SIZE, abs(diff_), dtype = torch.long)
+            bal_pad = torch.ones(BATCH_SIZE, abs(diff_), dtype = torch.long).cuda() # gpu setting
 
             if diff_ < 0:
                 src = torch.cat((src, bal_pad), dim = 1)
@@ -51,20 +51,23 @@ def train_model(epochs, model, criterion, model_opt, train_iter, save_path, prin
                 tgt = torch.cat((tgt, bal_pad), dim = 1)
                 
             bat = Batch(src, tgt) # from train.Batch
-            
+            bat.trg_y = bat.trg_y.contiguous()
             hidden = model.forward(bat.src, bat.trg, bat.src_mask, bat.trg_mask)
             preds = model.generator(hidden)
 
             model_opt.zero_grad()
 
-            loss = criterion(preds.contiguous().view(-1, preds.size(-1)),
-                            bat.trg_y.contiguous().view(-1))
+            loss = criterion(preds.view(-1, preds.size(-1)),
+                            bat.trg_y.view(-1))
             loss.backward()
 
             model_opt.step()
 
             total_loss += loss.data
             mean_tokens += bat.ntokens / BATCH_SIZE
+
+            del loss, preds, hidden
+            torch.cuda.empty_cache()
 
             if i % print_every == 0:
                 elapsed = time.time() - start

@@ -43,7 +43,7 @@ def train_model(epochs, model, criterion, model_opt, train_iter, save_path, prin
             
             # equalize sequence length of batches, originated from torchtext
             diff_ = src.size(-1) - tgt.size(-1)
-            bal_pad = torch.ones(BATCH_SIZE, abs(diff_), dtype = torch.long).cuda() # gpu setting
+            bal_pad = torch.ones(src.shape[0], abs(diff_), dtype = torch.long).cuda() # gpu setting
 
             if diff_ < 0:
                 src = torch.cat((src, bal_pad), dim = 1)
@@ -78,6 +78,6 @@ def train_model(epochs, model, criterion, model_opt, train_iter, save_path, prin
                 total_loss = 0
                 mean_tokens = 0
 
-        torch.save(model.state_dict(), save_path + str(i) + ".pt") # save check point
-        print("Epoch Step : %d is done" %(epcoh))
+        torch.save(model.state_dict(), save_path + str(epoch) + ".pt") # save check point
+        print("Epoch Step : %d is done" %(epoch))
         
